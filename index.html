@@ -138,7 +138,7 @@
           <button class="mini" id="btnSpeak">♪ 读一下</button>
           <button class="mini" id="btnFav">☆ 收藏</button>
         </div>
-        <div class="tip">点一下看意思</div>
+        <div class="tip">点卡片两面来回翻 · 翻到意思面后可选「记住了 / 没记住」</div>
       </div>
       <div id="back" class="hide">
         <div class="ph" id="ph2"></div>
@@ -395,27 +395,27 @@ function playWord(text){
     if(!src){ src="https://dict.youdao.com/dictvoice?type=2&audio="+encodeURIComponent(text); }
     var a=new Audio(); a.src=src; curAudio=a;
     var done=false, tried=0;
-    function fb(){
+    function fail(){
       if(done) return;
-      if(tried<2){ tried++; setTimeout(function(){ // 缓冲慢/首次拒绝时，稍等重试两次
-        try{ var p=a.play(); if(p&&p.catch){ p.catch(fb); } }catch(e){ fb(); }
-      },300); return; }
+      if(tried<2){ tried++; setTimeout(function(){
+        try{ var p=a.play(); if(p&&p.catch){ p.catch(fail); } }catch(e){ fail(); }
+      },400); return; }
       done=true; speak(text);
     }
-    a.onerror=fb;
-    if(a.readyState>=2){ // 已缓冲好，直接放
-      var p=a.play(); if(p&&p.catch){ p.catch(fb); }
-    }else{ // 先加载，能放了再放（部分安卓内核没加载完就 play 会被拒绝）
-      a.addEventListener("canplay",function(){
-        if(done) return;
-        try{ var p=a.play(); if(p&&p.catch){ p.catch(fb); } }catch(e){ fb(); }
-      },{once:true});
-      a.load();
-      setTimeout(function(){ if(!done&&a.paused&&a.currentTime===0){ // 5秒还没动静就报状态
-        var t=document.getElementById("toast");
-        if(t){ t.className="toast no"; t.textContent="音频加载慢，请检查网络后再试一次"; }
-      } },5000);
-    }
+    a.onerror=fail;
+    // 关键：必须在点击事件里同步调用 play()——手机浏览器只认可「点击那一瞬间」发起的播放，
+    // 等加载完再播会被当成自动播放而拒绝（安卓正面读不出声的原因）
+    try{
+      var p=a.play();
+      if(p&&p.catch){ p.catch(function(){
+        // 被拒（多半是音频还没加载好）：等加载好后再试一次
+        a.addEventListener("canplay",function(){
+          if(done) return;
+          try{ var p2=a.play(); if(p2&&p2.catch){ p2.catch(fail); } }catch(e){ fail(); }
+        },{once:true});
+        a.load();
+      }); }
+    }catch(e){ fail(); }
   }catch(e){ speak(text); }
 }
 
@@ -705,10 +705,10 @@ function parseLevels(str){
 
 // ---------- 事件绑定 ----------
 document.getElementById("card").addEventListener("click",function(){
-  if(cardFlipped) return;
-  cardFlipped=true;
-  document.getElementById("front").classList.add("hide");
-  document.getElementById("back").classList.remove("hide");
+  // 点卡片正反两面来回翻
+  cardFlipped=!cardFlipped;
+  document.getElementById("front").classList.toggle("hide",cardFlipped);
+  document.getElementById("back").classList.toggle("hide",!cardFlipped);
 });
 document.getElementById("btnSpeak").addEventListener("click",function(e){e.stopPropagation();playWord(curWord);});
 document.getElementById("btnSpeak2").addEventListener("click",function(e){e.stopPropagation();playWord(curWord);});
