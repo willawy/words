@@ -358,17 +358,26 @@ function speak(text){
   try{
     if(!window.speechSynthesis) return;
     var u=new SpeechSynthesisUtterance(text);
-    u.lang="en-US"; u.rate=0.85;
+    u.lang="en-US"; u.rate=0.85; u.volume=1;
     var vs=speechSynthesis.getVoices();
     for(var i=0;i<vs.length;i++){
       var l=vs[i].lang||"";
       if(l.indexOf("en-US")===0||l.indexOf("en_US")===0){u.voice=vs[i];break;}
     }
-    speechSynthesis.cancel();
     speechSynthesis.speak(u);
   }catch(e){}
 }
 function speakWord(w){ speak(w); }
+// iPhone/iPad 适配：首次触碰时静默解锁语音，并预热声音列表
+if(window.speechSynthesis){
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged=function(){ speechSynthesis.getVoices(); };
+  var __unlocked=false;
+  document.addEventListener("touchstart",function(){
+    if(__unlocked) return; __unlocked=true;
+    try{ var t=new SpeechSynthesisUtterance(" "); t.volume=0; speechSynthesis.speak(t); }catch(e){}
+  },{once:true});
+}
 
 // ---------- 积分 ----------
 function titleName(p){
