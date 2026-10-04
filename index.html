@@ -367,7 +367,7 @@ function speak(text){
     speechSynthesis.speak(u);
   }catch(e){}
 }
-function speakWord(w){ speak(w); }
+function speakWord(w){ playWord(w); }
 // iPhone/iPad 适配：首次触碰时静默解锁语音，并预热声音列表
 if(window.speechSynthesis){
   speechSynthesis.getVoices();
@@ -377,6 +377,27 @@ if(window.speechSynthesis){
     if(__unlocked) return; __unlocked=true;
     try{ var t=new SpeechSynthesisUtterance(" "); t.volume=0; speechSynthesis.speak(t); }catch(e){}
   },{once:true});
+}
+
+// 发音音频（三层瀑布）：
+// 1. audio/ 文件夹里的本地美式发音（这 56 个词已下载好，离线也能响；安卓国产机没有朗读引擎也靠它）
+// 2. 有道在线发音（以后新增的词走这层，不用再下载音频文件，联网就能响，苹果安卓通吃）
+// 3. 浏览器朗读（最后兜底）
+// 注意：映射按词写死，不按序号——以后往词表中间插新词，旧词的发音文件也不会串
+var AUDIO={"adapted to":"audio/w1.mp3","cared about":"audio/w2.mp3","test":"audio/w3.mp3","break":"audio/w4.mp3","important":"audio/w5.mp3","lent":"audio/w6.mp3","posted":"audio/w7.mp3","sold":"audio/w8.mp3","failed":"audio/w9.mp3","pointed to":"audio/w10.mp3","silence":"audio/w11.mp3","pressure":"audio/w12.mp3","calmness":"audio/w13.mp3","checked":"audio/w14.mp3","missed":"audio/w15.mp3","opened":"audio/w16.mp3","warned":"audio/w17.mp3","cured":"audio/w18.mp3","informed":"audio/w19.mp3","reminded":"audio/w20.mp3","similar":"audio/w21.mp3","proper":"audio/w22.mp3","equal":"audio/w23.mp3","harmful":"audio/w24.mp3","clever":"audio/w25.mp3","weak":"audio/w26.mp3","fluent":"audio/w27.mp3","arriving":"audio/w28.mp3","leaving":"audio/w29.mp3","staying":"audio/w30.mp3","bridge":"audio/w31.mp3","wall":"audio/w32.mp3","memory":"audio/w33.mp3","record":"audio/w34.mp3","night sky":"audio/w35.mp3","universe":"audio/w36.mp3","satellite":"audio/w37.mp3","curious":"audio/w38.mp3","mystery":"audio/w39.mp3","helicopter":"audio/w40.mp3","encouragement":"audio/w41.mp3","supportive":"audio/w42.mp3","environment":"audio/w43.mp3","opportunity":"audio/w44.mp3","adventure":"audio/w45.mp3","attracted":"audio/w46.mp3","discovered":"audio/w47.mp3","cultural":"audio/w48.mp3","exchange":"audio/w49.mp3","experienced":"audio/w50.mp3","mastered":"audio/w51.mp3","forced":"audio/w52.mp3","guided":"audio/w53.mp3","influenced":"audio/w54.mp3","harmed":"audio/w55.mp3","equipped":"audio/w56.mp3"};
+var curAudio=null;
+function playWord(text){
+  try{
+    if(curAudio){ try{curAudio.pause();}catch(e){} }
+    var src=AUDIO[text];
+    if(!src){ src="https://dict.youdao.com/dictvoice?type=2&audio="+encodeURIComponent(text); }
+    var a=new Audio(src); curAudio=a;
+    var done=false;
+    function fb(){ if(done) return; done=true; speak(text); }
+    a.onerror=fb;
+    var p=a.play();
+    if(p&&p.catch){ p.catch(fb); }
+  }catch(e){ speak(text); }
 }
 
 // ---------- 积分 ----------
@@ -670,8 +691,8 @@ document.getElementById("card").addEventListener("click",function(){
   document.getElementById("front").classList.add("hide");
   document.getElementById("back").classList.remove("hide");
 });
-document.getElementById("btnSpeak").addEventListener("click",function(e){e.stopPropagation();speak(curWord);});
-document.getElementById("btnSpeak2").addEventListener("click",function(e){e.stopPropagation();speak(curWord);});
+document.getElementById("btnSpeak").addEventListener("click",function(e){e.stopPropagation();playWord(curWord);});
+document.getElementById("btnSpeak2").addEventListener("click",function(e){e.stopPropagation();playWord(curWord);});
 document.getElementById("btnFav").addEventListener("click",function(e){e.stopPropagation();favToggle(curWord);updFavBtn();});
 
 document.getElementById("tabHome").addEventListener("click",renderHome);
