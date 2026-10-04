@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>英语单词卡 · 张同学</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px 16px 48px; background:#F7F7F5; color:#2C2C2A;
+         font-family: "Microsoft YaHei","PingFang SC",-apple-system,"Segoe UI",sans-serif; }
+  .wrap { max-width: 620px; margin:0 auto; }
+  h1 { font-size:18px; font-weight:600; margin:0 0 4px; }
+  .sub { font-size:13px; color:#5F5E5A; margin-bottom:14px; }
+  .panel { background:#fff; border:1px solid #E3E2DC; border-radius:12px; padding:18px; margin-bottom:14px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .stat { flex:1 1 100px; background:#F1EFE8; border-radius:8px; padding:10px 12px; }
+  .stat b { display:block; font-size:20px; }
+  .stat span { font-size:12px; color:#5F5E5A; }
+  button { font-family:inherit; font-size:15px; padding:11px 18px; border-radius:8px;
+           border:1px solid #C9C8C0; background:#fff; color:#2C2C2A; cursor:pointer; }
+  button:hover { background:#F1EFE8; }
+  button.primary { background:#185FA5; border-color:#185FA5; color:#fff; }
+  button.primary:hover { background:#0C447C; }
+  button.good { background:#3B6D11; border-color:#3B6D11; color:#fff; }
+  button.good:hover { background:#27500A; }
+  button.bad { background:#fff; border-color:#A32D2D; color:#A32D2D; }
+  button.bad:hover { background:#FCEBEB; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .tab { padding:9px 16px; font-size:14px; }
+  .tab.on { background:#185FA5; border-color:#185FA5; color:#fff; }
+  .tabs .spacer { flex:1; }
+  .ptsBadge { background:#F5E9D0; border:1px solid #E4CFA5; color:#7A5A12; border-radius:12px;
+              padding:5px 14px; font-size:14px; font-weight:600; white-space:nowrap; }
+  .card { background:#fff; border:1px solid #E3E2DC; border-radius:16px; min-height:240px;
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          padding:26px 20px; text-align:center; cursor:pointer; user-select:none; }
+  .word { font-size:38px; font-weight:600; letter-spacing:.5px; word-break:break-word; }
+  .pos { font-size:13px; color:#888780; margin-top:8px; }
+  .ph  { font-size:17px; color:#5F5E5A; margin-top:10px;
+         font-family: Georgia,"Times New Roman","Arial Unicode MS",serif; }
+  .tip { font-size:12px; color:#B4B2A9; margin-top:14px; }
+  .cn { font-size:26px; font-weight:600; margin-bottom:10px; }
+  .eg { font-size:15px; color:#185FA5; margin-bottom:8px; }
+  .src { font-size:12px; color:#888780; }
+  .badge { display:inline-block; font-size:12px; padding:2px 8px; border-radius:6px; background:#E6F1FB; color:#185FA5; margin-bottom:14px; }
+  .badge.rev { background:#FAEEDA; color:#854F0B; }
+  .toast { font-size:14px; text-align:center; min-height:24px; margin-top:12px; }
+  .ok { color:#3B6D11; }
+  .no { color:#A32D2D; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:7px 6px; border-bottom:1px solid #EDEBE4; }
+  th { font-weight:500; color:#5F5E5A; background:#FAFAF7; }
+  .hide { display:none; }
+  .foot { font-size:12px; color:#888780; line-height:1.7; }
+  .bar { height:8px; background:#EDEBE4; border-radius:4px; overflow:hidden; margin:10px 0 4px; }
+  .bar > i { display:block; height:100%; background:#185FA5; width:0; transition:width .25s; }
+  .mini { font-size:13px; padding:6px 12px; border-radius:6px; }
+  .mini.gold { background:#B8860B; border-color:#B8860B; color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1>英语单词卡 · 张同学</h1>
+      <div class="sub" id="todayLine"></div>
+    </div>
+    <span class="ptsBadge" id="ptsBadge">0 分</span>
+  </div>
+
+  <!-- 导航栏 -->
+  <div class="tabs">
+    <button class="tab on" id="tabHome">今日新词</button>
+    <button class="tab" id="tabWrong">错题本</button>
+    <button class="tab" id="tabFav">收藏单词</button>
+    <span class="spacer"></span>
+    <button class="tab" id="btnParent">家长端</button>
+  </div>
+
+  <!-- 首页（今日新词） -->
+  <div id="viewHome">
+    <div class="panel">
+      <div class="row" style="margin-bottom:14px">
+        <div class="stat"><b id="nNew">0</b><span>今日新词</span></div>
+        <div class="stat"><b id="nRev">0</b><span>今日复习</span></div>
+        <div class="stat"><b id="nDone">0</b><span>今日已完成</span></div>
+      </div>
+      <div id="planList" class="foot"></div>
+      <div style="margin-top:16px">
+        <button class="primary" id="btnStart">开始今天的练习</button>
+        <button id="btnList">看全部词表</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <b>积分与红包</b>
+      <div id="redeemBox" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel foot">
+      <b>怎么用（每天一次，约 3 分钟）</b><br>
+      1. 点「开始今天的练习」→ 看英文先想意思，可点「♪ 读一下」听美式发音；<br>
+      2. 点卡片翻面核对；难记的词点「☆ 收藏」，以后在「收藏单词」里随时翻；<br>
+      3. 想起来了点「记住了」（<b>+1 分</b>），想不起来点「没记住」——没记住的词自动退回第一天重排，并进「错题本」；<br>
+      4. 练完当天全部的词，可以领「今日完成奖励 +5 分」；积分攒够档位就能申请红包，家长在「家长端」确认后发放；<br>
+      5. 每周点一次「导出进度」，把文件存好（防丢）。
+    </div>
+
+    <div class="panel foot">
+      <div class="row">
+        <button id="btnExport">导出进度</button>
+        <button id="btnImport">导入进度</button>
+        <button id="btnReset">重置今日</button>
+        <input type="file" id="fileImport" accept=".json" class="hide">
+      </div>
+      <div id="ioMsg" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 练习页 -->
+  <div id="viewCard" class="hide">
+    <div class="panel" style="padding:14px 18px">
+      <div class="row" style="justify-content:space-between">
+        <span id="cardBadge" class="badge">新词</span>
+        <span class="foot" id="cardProgress"></span>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div class="card" id="card">
+      <div id="front">
+        <div class="word" id="word"></div>
+        <div class="pos" id="pos"></div>
+        <div class="ph" id="ph"></div>
+        <div class="row" style="justify-content:center;margin-top:10px">
+          <button class="mini" id="btnSpeak">♪ 读一下</button>
+          <button class="mini" id="btnFav">☆ 收藏</button>
+        </div>
+        <div class="tip">点一下看意思</div>
+      </div>
+      <div id="back" class="hide">
+        <div class="ph" id="ph2"></div>
+        <div class="cn" id="cn"></div>
+        <div class="eg" id="eg"></div>
+        <button class="mini" id="btnSpeak2">♪ 再读一次</button>
+        <div class="src" id="src" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="good" id="btnGood" style="flex:1">记住了</button>
+      <button class="bad" id="btnBad" style="flex:1">没记住</button>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- 完成页 -->
+  <div id="viewDone" class="hide">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:22px;font-weight:600;margin-bottom:8px" id="doneTitle">今天的词练完了</div>
+      <div class="foot" id="doneMsg"></div>
+      <div style="margin-top:16px" id="bonusRow" class="hide">
+        <button class="primary" id="btnBonus">领取今日完成奖励（+5 分）</button>
+      </div>
+      <div style="margin-top:16px">
+        <button class="primary" id="btnBack">回到首页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 错题本 -->
+  <div id="viewWrong" class="hide">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <b>错题本 <span class="foot" id="wrongCount"></span></b>
+        <span class="foot">点过「没记住」的词都在这里</span>
+      </div>
+      <div id="wrongBox"></div>
+      <div style="margin-top:14px">
+        <button class="primary" id="btnWrongGo">再练一遍错题</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏单词 -->
+  <div id="viewFav" class="hide">
+    <div class="panel">
+      <b>收藏单词</b>
+      <div id="favBox" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 全部词表 -->
+  <div id="viewList" class="hide">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <b>全部词表</b><button id="btnBack2">返回</button>
+      </div>
+      <table><thead><tr><th>单词</th><th>读音</th><th>中文</th><th>状态</th><th>下次复习</th></tr></thead>
+      <tbody id="listBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- 家长端 -->
+  <div id="viewParent" class="hide">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <b>家长端 · 学习情况</b>
+        <button class="primary" id="btnBackStudent">回到学生端</button>
+      </div>
+      <div id="parentBox"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="mini" id="btnPin">修改家长密码</button>
+        <button class="mini" id="btnLevels">修改红包档位</button>
+      </div>
+      <div class="foot" style="margin-top:8px">红包规则建议和孩子当面定好：什么档位、多少钱，说到做到。</div>
+    </div>
+  </div>
+
+  <div class="foot" style="text-align:center">进度只存在这台电脑里，不上传。数据来源：英语生词本.md（2026-10-01 建）</div>
+</div>
+
+<script>
+var WORDS = [
+ {w:"adapted to",pos:"短语",ph:"/əˈdæptɪd tuː/",cn:"适应",src:"完形 48（错题）",eg:"adapt to the new environment 适应新环境"},
+ {w:"cared about",pos:"短语",ph:"/kerd əˈbaʊt/",cn:"关心；在意",src:"完形 48（错题）",eg:"care about your family 关心家人"},
+ {w:"test",pos:"n./v.",ph:"/test/",cn:"测验；考试",src:"完形 42",eg:"take a test 参加考试"},
+ {w:"break",pos:"v./n.",ph:"/breɪk/",cn:"打破；休息",src:"完形 42",eg:"break the record 打破纪录"},
+ {w:"important",pos:"adj.",ph:"/ɪmˈpɔːrtnt/",cn:"重要的",src:"完形 43",eg:"an important decision 重要的决定"},
+ {w:"lent",pos:"v.",ph:"/lent/",cn:"借出（lend 过去式）",src:"完形 44",eg:"He lent me his book. 他把书借给我。"},
+ {w:"posted",pos:"v.",ph:"/ˈpoʊstɪd/",cn:"发布；邮寄",src:"完形 44",eg:"post photos online 在网上发照片"},
+ {w:"sold",pos:"v.",ph:"/soʊld/",cn:"卖（sell 过去式）",src:"完形 44",eg:"sell out 卖光"},
+ {w:"failed",pos:"v.",ph:"/feɪld/",cn:"失败；不及格",src:"完形 48",eg:"fail the exam 考试不及格"},
+ {w:"pointed to",pos:"短语",ph:"/ˈpɔɪntɪd tuː/",cn:"指向",src:"完形 48",eg:"point to the map 指着地图"},
+ {w:"silence",pos:"n.",ph:"/ˈsaɪləns/",cn:"沉默；安静",src:"完形 49",eg:"in silence 沉默地"},
+ {w:"pressure",pos:"n.",ph:"/ˈpreʃər/",cn:"压力",src:"完形 49",eg:"under great pressure 在很大压力下"},
+ {w:"calmness",pos:"n.",ph:"/ˈkɑːmnəs/",cn:"镇静；冷静",src:"完形 49",eg:"with calmness 镇定地"},
+ {w:"checked",pos:"v.",ph:"/tʃekt/",cn:"核对；检查",src:"完形 50",eg:"check the answers 核对答案"},
+ {w:"missed",pos:"v.",ph:"/mɪst/",cn:"错过；想念",src:"完形 50",eg:"miss the bus 错过公交"},
+ {w:"opened",pos:"v.",ph:"/ˈoʊpənd/",cn:"打开",src:"完形 50",eg:"open the door 开门"},
+ {w:"warned",pos:"v.",ph:"/wɔːrnd/",cn:"警告",src:"完形 51",eg:"warn sb of sth 警告某人某事"},
+ {w:"cured",pos:"v.",ph:"/kjʊrd/",cn:"治愈",src:"完形 51",eg:"cure the disease 治愈疾病"},
+ {w:"informed",pos:"v.",ph:"/ɪnˈfɔːrmd/",cn:"通知",src:"完形 51",eg:"inform sb of sth 通知某人某事"},
+ {w:"reminded",pos:"v.",ph:"/rɪˈmaɪndɪd/",cn:"提醒；使想起",src:"完形 51（正确项）",eg:"remind sb of sth 使某人想起某事"},
+ {w:"similar",pos:"adj.",ph:"/ˈsɪmələr/",cn:"相似的",src:"完形 52",eg:"be similar to 与…相似"},
+ {w:"proper",pos:"adj.",ph:"/ˈprɑːpər/",cn:"合适的",src:"完形 52",eg:"a proper way 合适的方式"},
+ {w:"equal",pos:"adj.",ph:"/ˈiːkwəl/",cn:"平等的；相等的",src:"完形 52",eg:"be equal to 与…相等"},
+ {w:"harmful",pos:"adj.",ph:"/ˈhɑːrmfl/",cn:"有害的",src:"完形 52",eg:"be harmful to 对…有害"},
+ {w:"clever",pos:"adj.",ph:"/ˈklevər/",cn:"聪明的",src:"完形 53",eg:"a clever boy 聪明的男孩"},
+ {w:"weak",pos:"adj.",ph:"/wiːk/",cn:"虚弱的；弱的",src:"完形 53",eg:"be weak in 在…方面薄弱"},
+ {w:"fluent",pos:"adj.",ph:"/ˈfluːənt/",cn:"流利的",src:"完形 53",eg:"be fluent in Chinese 中文流利"},
+ {w:"arriving",pos:"v.",ph:"/əˈraɪvɪŋ/",cn:"到达",src:"完形 54",eg:"arrive in / arrive at 到达"},
+ {w:"leaving",pos:"v.",ph:"/ˈliːvɪŋ/",cn:"离开",src:"完形 54",eg:"leave for Beijing 动身去北京"},
+ {w:"staying",pos:"v.",ph:"/ˈsteɪɪŋ/",cn:"停留；待着",src:"完形 54",eg:"stay up late 熬夜"},
+ {w:"bridge",pos:"n.",ph:"/brɪdʒ/",cn:"桥",src:"完形 55",eg:"a cultural bridge 文化桥梁"},
+ {w:"wall",pos:"n.",ph:"/wɔːl/",cn:"墙",src:"完形 55",eg:"the Great Wall 长城"},
+ {w:"memory",pos:"n.",ph:"/ˈmeməri/",cn:"记忆；记性",src:"完形 55",eg:"a good memory 好记性"},
+ {w:"record",pos:"n./v.",ph:"/ˈrekərd/",cn:"记录；纪录",src:"完形 55",eg:"break the record 打破纪录"},
+ {w:"night sky",pos:"n.",ph:"/naɪt skaɪ/",cn:"夜空",src:"作文（写成了 nightsky）",eg:"the stars in the night sky"},
+ {w:"universe",pos:"n.",ph:"/ˈjuːnɪvɜːrs/",cn:"宇宙",src:"作文",eg:"the mystery of the universe"},
+ {w:"satellite",pos:"n.",ph:"/ˈsætəlaɪt/",cn:"卫星",src:"作文",eg:"a man-made satellite 人造卫星"},
+ {w:"curious",pos:"adj.",ph:"/ˈkjʊriəs/",cn:"好奇的",src:"作文",eg:"be curious about 对…好奇"},
+ {w:"mystery",pos:"n.",ph:"/ˈmɪstəri/",cn:"神秘；谜",src:"作文",eg:"the mystery of space"},
+ {w:"helicopter",pos:"n.",ph:"/ˈhelɪkɑːptər/",cn:"直升机",src:"续写原文关键词",eg:"a rescue helicopter 救援直升机"},
+ {w:"encouragement",pos:"n.",ph:"/ɪnˈkɜːrɪdʒmənt/",cn:"鼓励",src:"完形 49（正确项）",eg:"give sb encouragement 给予鼓励"},
+ {w:"supportive",pos:"adj.",ph:"/səˈpɔːrtɪv/",cn:"支持的；鼓励的",src:"AI 高频（同义复现搭档）",eg:"a supportive teacher 支持学生的老师"},
+ {w:"environment",pos:"n.",ph:"/ɪnˈvaɪrənmənt/",cn:"环境",src:"AI 高频（adapt to 的搭档）",eg:"adapt to the new environment"},
+ {w:"opportunity",pos:"n.",ph:"/ˌɑːpərˈtuːnəti/",cn:"机会",src:"AI 高频（chance 同义）",eg:"take the opportunity 抓住机会"},
+ {w:"adventure",pos:"n.",ph:"/ədˈventʃər/",cn:"冒险",src:"完形 45",eg:"a space adventure 太空冒险"},
+ {w:"attracted",pos:"v.",ph:"/əˈtræktɪd/",cn:"吸引",src:"完形 46",eg:"be attracted by 被…吸引"},
+ {w:"discovered",pos:"v.",ph:"/dɪˈskʌvərd/",cn:"发现",src:"完形 50",eg:"discover a new star 发现一颗新星"},
+ {w:"cultural",pos:"adj.",ph:"/ˈkʌltʃərəl/",cn:"文化的",src:"AI 高频（作文常用）",eg:"cultural exchange 文化交流"},
+ {w:"exchange",pos:"n./v.",ph:"/ɪksˈtʃeɪndʒ/",cn:"交换；交流",src:"AI 高频（作文常用）",eg:"cultural exchange 文化交流"},
+ {w:"experienced",pos:"adj./v.",ph:"/ɪkˈspɪriənst/",cn:"有经验的；经历",src:"完形 41 干扰项",eg:"an experienced teacher 有经验的老师"},
+ {w:"mastered",pos:"v.",ph:"/ˈmæstərd/",cn:"掌握",src:"完形 41 干扰项",eg:"master a language 掌握一门语言"},
+ {w:"forced",pos:"v.",ph:"/fɔːrst/",cn:"强迫；迫使",src:"完形 46 干扰项",eg:"be forced to do 被迫做"},
+ {w:"guided",pos:"v.",ph:"/ˈɡaɪdɪd/",cn:"引导",src:"完形 46 干扰项",eg:"guide sb to do 引导某人做"},
+ {w:"influenced",pos:"v.",ph:"/ˈɪnfluənst/",cn:"影响",src:"完形 46 干扰项",eg:"be influenced by 被…影响"},
+ {w:"harmed",pos:"v.",ph:"/hɑːrmd/",cn:"伤害",src:"AI 高频（harmful 的动词）",eg:"harm the environment 破坏环境"},
+ {w:"equipped",pos:"v.",ph:"/ɪˈkwɪpt/",cn:"装备",src:"AI 高频（搭配词）",eg:"be equipped with 配备有"}
+];
+
+var OFFSETS=[1,2,4,7,15,30];
+var DAILY=6, MAXREV=4;
+var KEY="zxh_en_words_v1";
+var LEVEL_NAMES=[[600,"词霸养成"],[300,"词汇高手"],[100,"词汇达人"],[50,"单词学徒"],[0,"新手上路"]];
+
+function todayStr(){return fmt(new Date());}
+function fmt(d){var m=("0"+(d.getMonth()+1)).slice(-2),dd=("0"+d.getDate()).slice(-2);return d.getFullYear()+"-"+m+"-"+dd;}
+function parse(s){var p=s.split("-");return Date.UTC(+p[0],+p[1]-1,+p[2]);}
+function diffDays(a,b){return Math.round((parse(b)-parse(a))/86400000);}
+function addDays(s,n){var t=parse(s)+n*86400000;var d=new Date(t);return d.getUTCFullYear()+"-"+("0"+(d.getUTCMonth()+1)).slice(-2)+"-"+("0"+d.getUTCDate()).slice(-2);}
+
+// ---------- 状态（兼容旧版进度：老数据自动补上新字段） ----------
+function normalizeState(s){
+  if(!s||typeof s!=="object") s={};
+  if(!s.words) s.words={};
+  if(!s.log||s.log.date!==todayStr()) s.log={date:todayStr(),done:[]};
+  if(!s.fav) s.fav=[];
+  if(typeof s.points!=="number") s.points=0;
+  if(typeof s.earned!=="number") s.earned=0;
+  if(!s.history) s.history={};
+  if(!s.pendingRedeem) s.pendingRedeem=[];
+  if(!s.redeemed) s.redeemed=[];
+  if(!s.levels||!s.levels.length) s.levels=[{pts:100,yuan:10},{pts:300,yuan:30},{pts:600,yuan:60}];
+  if(!s.parentPin) s.parentPin="1234";
+  if(!s.lastBonus) s.lastBonus="";
+  s.v=2;
+  return s;
+}
+function load(){
+  try{var raw=localStorage.getItem(KEY);if(raw){return normalizeState(JSON.parse(raw));}}catch(e){}
+  return normalizeState(null);
+}
+function save(st){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+
+var state=load();
+
+function st(w){ return state.words[w.w]||null; }
+function nextDue(s){
+  if(!s) return null;
+  if(s.mastered) return addDays(s.last,30);
+  return addDays(s.base, OFFSETS[Math.min(s.stage,OFFSETS.length-1)]);
+}
+function isDue(w){
+  var s=st(w); if(!s) return false;
+  if(state.log.done.some(function(d){return d.w===w.w;})) return false;
+  if(s.mastered) return diffDays(s.last,todayStr())>=30;
+  return diffDays(nextDue(s),todayStr())>=0;
+}
+function newLeft(){
+  return WORDS.filter(function(w){
+    return !st(w) && !state.log.done.some(function(d){return d.w===w.w;});
+  });
+}
+function buildToday(){
+  var due=WORDS.filter(isDue);
+  due.sort(function(a,b){ return parse(nextDue(st(a))) - parse(nextDue(st(b))); });
+  var rev=due.slice(0,MAXREV);
+  var nl=Math.max(2,DAILY-rev.length);
+  var nw=newLeft().slice(0,nl);
+  return rev.map(function(w){return {w:w,kind:(st(w).mastered?"check":"review")};})
+          .concat(nw.map(function(w){return {w:w,kind:"new"};}));
+}
+
+// ---------- 页面切换 ----------
+var VIEW_IDS=["viewHome","viewCard","viewDone","viewList","viewWrong","viewFav","viewParent"];
+function show(id){
+  VIEW_IDS.forEach(function(v){document.getElementById(v).classList.add("hide");});
+  document.getElementById(id).classList.remove("hide");
+}
+function setTab(id){
+  ["tabHome","tabWrong","tabFav"].forEach(function(t){document.getElementById(t).classList.remove("on");});
+  if(id) document.getElementById(id).classList.add("on");
+}
+
+// ---------- 朗读（浏览器自带语音，美式） ----------
+function speak(text){
+  try{
+    if(!window.speechSynthesis) return;
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang="en-US"; u.rate=0.85;
+    var vs=speechSynthesis.getVoices();
+    for(var i=0;i<vs.length;i++){
+      var l=vs[i].lang||"";
+      if(l.indexOf("en-US")===0||l.indexOf("en_US")===0){u.voice=vs[i];break;}
+    }
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function speakWord(w){ speak(w); }
+
+// ---------- 积分 ----------
+function titleName(p){
+  for(var i=0;i<LEVEL_NAMES.length;i++){ if(p>=LEVEL_NAMES[i][0]) return LEVEL_NAMES[i][1]; }
+  return LEVEL_NAMES[LEVEL_NAMES.length-1][1];
+}
+function streak(){
+  var n=0,d=todayStr();
+  if(!state.history[d]||!state.history[d].n){ d=addDays(d,-1); }
+  while(state.history[d]&&state.history[d].n){ n++; d=addDays(d,-1); }
+  return n;
+}
+function updPts(){
+  document.getElementById("ptsBadge").textContent=state.points+" 分 · "+titleName(state.earned);
+}
+
+// ---------- 首页 ----------
+function renderHome(){
+  document.getElementById("todayLine").textContent="今天 "+todayStr();
+  var q=buildToday();
+  var rev=WORDS.filter(isDue).length;
+  document.getElementById("nNew").textContent=q.filter(function(x){return x.kind==="new";}).length;
+  document.getElementById("nRev").textContent=q.filter(function(x){return x.kind!=="new";}).length;
+  document.getElementById("nDone").textContent=state.log.done.length;
+  var total=WORDS.length, learned=Object.keys(state.words).length;
+  var m=WORDS.filter(function(w){var s=st(w);return s&&s.mastered;}).length;
+  var mess=[];
+  mess.push("词库共 "+total+" 个 · 已开始练 "+learned+" 个 · 已掌握 "+m+" 个 · 连续打卡 "+streak()+" 天");
+  if(rev>MAXREV) mess.push("⚠️ 今天到期的复习词有 "+rev+" 个，超出的明天继续排（不欠账，只是排队）。");
+  if(q.length===0) mess.push("今天没有到期的词。可以去「错题本」加练，或休息一天。");
+  document.getElementById("planList").innerHTML=mess.join("<br>");
+  renderRedeem();
+  updPts();
+  show("viewHome"); setTab("tabHome");
+}
+
+function renderRedeem(){
+  var h="当前积分 <b style='font-size:18px'>"+state.points+"</b> · 累计获得 "+state.earned+" 分 · 称号「"+titleName(state.earned)+"」";
+  h+="<div class='foot' style='margin:6px 0 8px'>答对 1 个词 +1 分；完成当天全部练习再 +5 分；答错不扣分。攒够档位就能申请红包，家长确认后发放。</div>";
+  h+="<table><thead><tr><th>档位</th><th>所需积分</th><th>红包</th><th>操作</th></tr></thead><tbody>";
+  state.levels.forEach(function(lv,i){
+    var pend=state.pendingRedeem.some(function(r){return r.pts===lv.pts&&r.yuan===lv.yuan;});
+    var cell;
+    if(pend) cell="等家长确认…";
+    else if(state.points>=lv.pts) cell="<button class='mini primary' onclick='applyRedeem("+i+")'>申请兑换</button>";
+    else cell="<span class='foot'>还差 "+(lv.pts-state.points)+" 分</span>";
+    h+="<tr><td>第 "+(i+1)+" 档</td><td>"+lv.pts+" 分</td><td>¥"+lv.yuan+"</td><td>"+cell+"</td></tr>";
+  });
+  h+="</tbody></table>";
+  if(state.pendingRedeem.length){
+    h+="<div class='foot' style='margin-top:8px;color:#854F0B'>已有 "+state.pendingRedeem.length+" 个兑换申请等家长确认。</div>";
+  }
+  document.getElementById("redeemBox").innerHTML=h;
+}
+function applyRedeem(i){
+  var lv=state.levels[i];
+  if(!lv||state.points<lv.pts) return;
+  if(!confirm("用 "+lv.pts+" 分申请兑换 ¥"+lv.yuan+" 红包？申请后需要家长在「家长端」确认。")) return;
+  state.pendingRedeem.push({date:todayStr(),pts:lv.pts,yuan:lv.yuan});
+  save(state); renderRedeem();
+}
+
+// ---------- 练习 ----------
+var queue=[], idx=0, cardFlipped=false, sessionMode="daily", curWord=null, sessRight=0;
+
+function startSession(mode){
+  sessionMode=mode||"daily";
+  if(sessionMode==="wrong"){
+    queue=WORDS.filter(function(w){var s=st(w);return s&&s.wrong>0&&!s.mastered;})
+               .map(function(w){return {w:w,kind:"wrong"};});
+  }else{
+    queue=buildToday();
+  }
+  idx=0; sessRight=0;
+  if(queue.length===0){
+    if(sessionMode==="wrong"){ alert("错题本里没有需要加练的词。"); return; }
+    show("viewDone");
+    document.getElementById("doneTitle").textContent="今天没有到期的词";
+    document.getElementById("doneMsg").textContent="明天再来，或者去「错题本」加练。";
+    document.getElementById("bonusRow").classList.add("hide");
+    return;
+  }
+  show("viewCard"); nextCard();
+}
+
+function nextCard(){
+  if(idx>=queue.length){
+    show("viewDone");
+    document.getElementById("doneTitle").textContent=(sessionMode==="wrong"?"错题加练完成":"今天的词练完了");
+    document.getElementById("doneMsg").innerHTML=
+      "共练 "+queue.length+" 个，答对 "+sessRight+" 个，+"+sessRight+" 分已自动到账。<br>当前积分 "+state.points+" 分。";
+    var canBonus=(sessionMode==="daily"&&queue.length>0&&state.lastBonus!==todayStr());
+    document.getElementById("bonusRow").classList.toggle("hide",!canBonus);
+    save(state); return;
+  }
+  var it=queue[idx], w=it.w;
+  curWord=w.w; cardFlipped=false;
+  document.getElementById("front").classList.remove("hide");
+  document.getElementById("back").classList.add("hide");
+  document.getElementById("word").textContent=w.w;
+  document.getElementById("pos").textContent=w.pos;
+  document.getElementById("ph").textContent=w.ph||"";
+  document.getElementById("ph2").textContent=w.ph||"";
+  document.getElementById("cn").textContent=w.cn;
+  document.getElementById("eg").textContent=w.eg||"";
+  document.getElementById("src").textContent="来源："+w.src;
+  var b=document.getElementById("cardBadge");
+  if(it.kind==="new"){ b.textContent="新词"; b.className="badge"; }
+  else if(it.kind==="check"){ b.textContent="每月抽检"; b.className="badge rev"; }
+  else if(it.kind==="wrong"){ b.textContent="错题加练"; b.className="badge rev"; }
+  else { b.textContent="复习（第 "+(st(w).stage+1)+" 次）"; b.className="badge rev"; }
+  document.getElementById("cardProgress").textContent=(idx+1)+" / "+queue.length;
+  document.getElementById("barFill").style.width=(idx/queue.length*100)+"%";
+  document.getElementById("toast").textContent="";
+  document.getElementById("toast").className="toast";
+  updFavBtn();
+}
+
+function updFavBtn(){
+  var on=state.fav.indexOf(curWord)>=0;
+  var b=document.getElementById("btnFav");
+  b.textContent=on?"★ 已收藏":"☆ 收藏";
+  b.className="mini"+(on?" gold":"");
+}
+function favToggle(w){
+  var i=state.fav.indexOf(w);
+  if(i>=0) state.fav.splice(i,1); else state.fav.push(w);
+  save(state);
+}
+
+function answer(ok){
+  var it=queue[idx], w=it.w, s=st(w)||{stage:0,base:todayStr(),last:todayStr(),right:0,wrong:0,mastered:false};
+  var msg="";
+  if(ok){
+    // 新词答对只算"学过"，下一步仍是 +1 天；复习答对才推进一格
+    if(it.kind==="new"){ s.stage=0; } else { s.stage=(s.stage||0)+1; }
+    s.base=todayStr(); s.last=todayStr(); s.right=(s.right||0)+1;
+    if(s.stage>=OFFSETS.length){ s.mastered=true; msg="+1 分 · 已掌握 ✓ 一个月后抽检"; }
+    else { msg="+1 分 · 下次复习："+addDays(s.base,OFFSETS[s.stage]); }
+    state.points++; state.earned++; sessRight++;
+    document.getElementById("toast").className="toast ok";
+  }else{
+    s.stage=0; s.base=todayStr(); s.last=todayStr(); s.wrong=(s.wrong||0)+1; s.mastered=false;
+    msg="退回第一天，明天再复习一次（已进错题本）";
+    document.getElementById("toast").className="toast no";
+  }
+  state.words[w.w]=s;
+  state.log.done.push({w:w.w,ok:!!ok,t:todayStr()});
+  var h=state.history[todayStr()]||(state.history[todayStr()]={n:0,right:0});
+  h.n++; if(ok) h.right++;
+  save(state); updPts();
+  document.getElementById("toast").textContent=(ok?"记住了":"没记住")+" · "+msg;
+  idx++;
+  setTimeout(nextCard, 900);
+}
+
+// ---------- 错题本 ----------
+function renderWrong(){
+  var ws=WORDS.filter(function(w){var s=st(w);return s&&s.wrong>0;})
+              .sort(function(a,b){return st(b).wrong-st(a).wrong;});
+  var box=document.getElementById("wrongBox");
+  if(ws.length===0){
+    box.innerHTML="<div class='foot'>错题本是空的——练过的词都答对过，很好。以后点「没记住」的词会自动出现在这里。</div>";
+    document.getElementById("btnWrongGo").classList.add("hide");
+    document.getElementById("wrongCount").textContent="";
+  }else{
+    var h="<table><thead><tr><th>单词</th><th>读音</th><th>中文</th><th>答错</th><th>答对</th><th>状态</th></tr></thead><tbody>";
+    ws.forEach(function(w){
+      var s=st(w);
+      h+="<tr><td><b>"+w.w+"</b></td><td class='ph'>"+w.ph+"</td><td>"+w.cn+"</td>"+
+         "<td style='color:#A32D2D'>"+s.wrong+"</td><td style='color:#3B6D11'>"+(s.right||0)+"</td>"+
+         "<td>"+(s.mastered?"已掌握":"复习中")+"</td></tr>";
+    });
+    h+="</tbody></table>";
+    box.innerHTML=h;
+    var go=WORDS.filter(function(w){var s=st(w);return s&&s.wrong>0&&!s.mastered;}).length;
+    document.getElementById("btnWrongGo").classList.toggle("hide",go===0);
+    document.getElementById("wrongCount").textContent="（可加练 "+go+" 个）";
+  }
+  show("viewWrong"); setTab("tabWrong");
+}
+
+// ---------- 收藏 ----------
+function renderFav(){
+  var box=document.getElementById("favBox");
+  if(state.fav.length===0){
+    box.innerHTML="<div class='foot'>还没有收藏。练习时点卡片上的「☆ 收藏」，难记的词就会出现在这里，随时能翻、能听读音。</div>";
+  }else{
+    var h="<table><thead><tr><th>单词</th><th>读音</th><th>中文</th><th>操作</th></tr></thead><tbody>";
+    state.fav.forEach(function(wd){
+      var w=WORDS.filter(function(x){return x.w===wd;})[0];
+      if(!w) return;
+      h+="<tr><td><b>"+w.w+"</b></td><td class='ph'>"+w.ph+"</td><td>"+w.cn+"</td><td>"+
+         "<button class='mini' onclick='speakWord(\""+w.w+"\")'>♪ 读</button> "+
+         "<button class='mini' onclick='unfav(\""+w.w+"\")'>取消收藏</button></td></tr>";
+    });
+    h+="</tbody></table>";
+    box.innerHTML=h;
+  }
+  show("viewFav"); setTab("tabFav");
+}
+function unfav(w){ favToggle(w); renderFav(); }
+
+// ---------- 全部词表 ----------
+function renderList(){
+  var rows=WORDS.map(function(w){
+    var s=st(w);
+    var status=!s?"待学":(s.mastered?"已掌握":"复习中");
+    var nd=!s?"—":(s.mastered?addDays(s.last,30)+"（抽检）":nextDue(s));
+    return "<tr><td><b>"+w.w+"</b></td><td class='ph'>"+w.ph+"</td><td>"+w.cn+"</td><td>"+status+"</td><td>"+nd+"</td></tr>";
+  }).join("");
+  document.getElementById("listBody").innerHTML=rows;
+  show("viewList");
+}
+
+// ---------- 家长端 ----------
+function pstat(b,s){ return "<div class='stat'><b>"+b+"</b><span>"+s+"</span></div>"; }
+function renderParent(){
+  var total=WORDS.length;
+  var m=WORDS.filter(function(w){var s=st(w);return s&&s.mastered;}).length;
+  var days=0,n=0,right=0;
+  for(var d in state.history){ if(state.history[d]&&state.history[d].n){days++;n+=state.history[d].n;right+=state.history[d].right||0;} }
+  var acc=n?Math.round(right/n*100):0;
+  var q=buildToday();
+  var todayN=(state.history[todayStr()]&&state.history[todayStr()].n)||0;
+  var redeemedYuan=0; state.redeemed.forEach(function(r){redeemedYuan+=r.yuan;});
+
+  var h="<div class='row' style='margin-bottom:6px'>"+
+    pstat(days+" 天","累计练习")+pstat(streak()+" 天","连续打卡")+
+    pstat(todayN+" / "+Math.max(q.length,todayN),"今日完成")+pstat(acc+"%","累计答对率")+
+    "</div><div class='row' style='margin-bottom:12px'>"+
+    pstat(m+" / "+total,"已掌握")+pstat(state.points+" 分","当前积分")+
+    pstat(state.earned+" 分","累计获得")+pstat("¥"+redeemedYuan,"已兑红包")+
+    "</div>";
+
+  h+="<b>待确认的红包申请</b>";
+  if(state.pendingRedeem.length===0){
+    h+="<div class='foot' style='margin:6px 0'>暂无。</div>";
+  }else{
+    h+="<table><thead><tr><th>申请日期</th><th>积分</th><th>红包</th><th>操作</th></tr></thead><tbody>";
+    state.pendingRedeem.forEach(function(r,i){
+      h+="<tr><td>"+r.date+"</td><td>"+r.pts+" 分</td><td>¥"+r.yuan+"</td><td>"+
+         "<button class='mini good' onclick='confirmRedeem("+i+")'>确认发放</button> "+
+         "<button class='mini bad' onclick='rejectRedeem("+i+")'>驳回</button></td></tr>";
+    });
+    h+="</tbody></table>";
+  }
+
+  h+="<div style='margin-top:12px'><b>已发放记录</b>";
+  if(state.redeemed.length===0){
+    h+="<div class='foot' style='margin:6px 0'>暂无。</div>";
+  }else{
+    h+="<table><thead><tr><th>日期</th><th>积分</th><th>红包</th></tr></thead><tbody>";
+    state.redeemed.forEach(function(r){
+      h+="<tr><td>"+r.date+"</td><td>"+r.pts+" 分</td><td>¥"+r.yuan+"</td></tr>";
+    });
+    h+="</tbody></table>";
+  }
+  h+="</div>";
+  document.getElementById("parentBox").innerHTML=h;
+  show("viewParent"); setTab(null);
+}
+function confirmRedeem(i){
+  var r=state.pendingRedeem[i]; if(!r) return;
+  if(!confirm("确认已把 ¥"+r.yuan+" 红包发给孩子？确认后扣除 "+r.pts+" 分。")) return;
+  state.pendingRedeem.splice(i,1);
+  state.points-=r.pts;
+  state.redeemed.push(r);
+  save(state); updPts(); renderParent();
+}
+function rejectRedeem(i){
+  if(!confirm("驳回这个兑换申请？积分退回，不扣分。")) return;
+  state.pendingRedeem.splice(i,1);
+  save(state); renderParent();
+}
+function parseLevels(str){
+  var parts=str.split(/[,，]/), out=[];
+  for(var i=0;i<parts.length;i++){
+    var p=parts[i].split(/[:：]/);
+    var pts=parseInt(p[0],10), yuan=parseInt(p[1],10);
+    if(pts>0&&yuan>0) out.push({pts:pts,yuan:yuan});
+  }
+  return out.length?out:null;
+}
+
+// ---------- 事件绑定 ----------
+document.getElementById("card").addEventListener("click",function(){
+  if(cardFlipped) return;
+  cardFlipped=true;
+  document.getElementById("front").classList.add("hide");
+  document.getElementById("back").classList.remove("hide");
+});
+document.getElementById("btnSpeak").addEventListener("click",function(e){e.stopPropagation();speak(curWord);});
+document.getElementById("btnSpeak2").addEventListener("click",function(e){e.stopPropagation();speak(curWord);});
+document.getElementById("btnFav").addEventListener("click",function(e){e.stopPropagation();favToggle(curWord);updFavBtn();});
+
+document.getElementById("tabHome").addEventListener("click",renderHome);
+document.getElementById("tabWrong").addEventListener("click",renderWrong);
+document.getElementById("tabFav").addEventListener("click",renderFav);
+
+document.getElementById("btnStart").addEventListener("click",function(){startSession("daily");});
+document.getElementById("btnWrongGo").addEventListener("click",function(){startSession("wrong");});
+document.getElementById("btnGood").addEventListener("click",function(){ if(cardFlipped) answer(true); });
+document.getElementById("btnBad").addEventListener("click",function(){ if(cardFlipped) answer(false); });
+document.getElementById("btnList").addEventListener("click",renderList);
+document.getElementById("btnBack").addEventListener("click",renderHome);
+document.getElementById("btnBack2").addEventListener("click",renderHome);
+document.getElementById("btnBackStudent").addEventListener("click",renderHome);
+
+document.getElementById("btnBonus").addEventListener("click",function(){
+  if(state.lastBonus===todayStr()) return;
+  state.points+=5; state.earned+=5; state.lastBonus=todayStr();
+  save(state); updPts();
+  document.getElementById("bonusRow").classList.add("hide");
+  document.getElementById("doneMsg").innerHTML+="<br>今日完成奖励 +5 分已到账，当前 "+state.points+" 分。";
+});
+
+document.getElementById("btnParent").addEventListener("click",function(){
+  var p=prompt("请输入家长密码（首次默认 1234，进家长端后可修改）：");
+  if(p===null) return;
+  if(p!==state.parentPin){ alert("密码不对。"); return; }
+  renderParent();
+});
+document.getElementById("btnPin").addEventListener("click",function(){
+  var p=prompt("输入新的家长密码：");
+  if(p===null||p==="") return;
+  state.parentPin=p; save(state);
+  alert("密码已改好，下次用新密码进。");
+});
+document.getElementById("btnLevels").addEventListener("click",function(){
+  var s=prompt("输入新的红包档位，格式「积分:金额」，逗号分隔。\n例如：100:10,300:30,600:60","");
+  if(s===null) return;
+  var L=parseLevels(s);
+  if(L){ state.levels=L; save(state); renderParent(); }
+  else alert("格式没看懂，没有修改。");
+});
+
+document.getElementById("btnReset").addEventListener("click",function(){
+  if(!confirm("清空今天的练习记录（已掌握的进度、积分不受影响）？")) return;
+  state.log={date:todayStr(),done:[]};
+  if(state.lastBonus===todayStr()) state.lastBonus="";
+  save(state); renderHome();
+  document.getElementById("ioMsg").textContent="今天的练习记录已清空。";
+});
+document.getElementById("btnExport").addEventListener("click",function(){
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="单词卡进度 "+todayStr()+".json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  document.getElementById("ioMsg").textContent="已导出：把文件存回 英语 文件夹，进度就丢不了。";
+});
+document.getElementById("btnImport").addEventListener("click",function(){ document.getElementById("fileImport").click(); });
+document.getElementById("fileImport").addEventListener("change",function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ try{ var o=JSON.parse(r.result);
+      if(o && o.words){ state=normalizeState(o); save(state); renderHome();
+        document.getElementById("ioMsg").textContent="进度已导入。"; }
+      else { document.getElementById("ioMsg").textContent="这个文件不认识，导入失败。"; }
+    }catch(err){ document.getElementById("ioMsg").textContent="文件读取失败："+err.message; } };
+  r.readAsText(f);
+});
+
+renderHome();
+</script>
+</body>
+</html>
